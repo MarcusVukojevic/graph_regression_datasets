@@ -234,24 +234,3 @@ class HeteroGNN_HGT(torch.nn.Module):
         output = self.lin(x)  # Apply the final linear transformation to produce the output
 
         return output  # Return the predicted graph-level features
-
-
-
-
-# Helper function to extract the metadata (node types and edge types) from the dataset
-def extract_metadata(dataset):
-    node_types = set()  # Set to hold unique node types
-    edge_types = set()  # Set to hold unique edge types
-    
-    # Iterate through all graphs in the dataset
-    for data in dataset:
-        # Collect node types from the graph
-        node_types.update(list(data.x_dict.keys()))
-        # Collect edge types from the graph
-        edge_types.update(list(data.edge_index_dict.keys()))
-    
-    # Convert sets to sorted lists for consistency
-    node_types = list(sorted(node_types))
-    edge_types = list(sorted(edge_types))
-    
-    return (node_types, edge_types)  # Return the node and edge types as a tuple
