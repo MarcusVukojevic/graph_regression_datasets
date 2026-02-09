@@ -1,37 +1,98 @@
-# Graph Dataset for Relations between Node Types
+# A Benchmark Dataset for Graph Regression with Homogeneous and Multi‑Relational Variants
 
-This repository contains the code used to analyze a dataset of graph structures, focusing on relations between various node types. The dataset, including all necessary data files, labels, and PyTorch Geometric (PyG) objects, is available on Zenodo at the following link:
+Code and dataset loaders for graph regression experiments on software-system graphs.
 
-[Zenodo Dataset Link](https://zenodo.org/records/13741001)
+**Important:** start from `Tutorial.ipynb`. The notebook is the main step-by-step guide for data loading, training, and evaluation.
 
-## Dataset Overview
+## Dataset download
 
-The dataset includes several JSON files representing graph data, CSV files containing labels, and PyTorch Geometric objects used for training and analyzing graph neural networks. Please refer to the Jupyter Notebook in the repo for a quick turorial on how to train a Heterogeneus Graph model using this datasets.
+Dataset files are hosted on Zenodo:
+- https://zenodo.org/records/13741001
 
-## Data Files
+Expected folders used by the scripts:
 
-The dataset consists of three key components:
+```text
+graph_regression_datasets/
+├── data/
+│   ├── rdf.json
+│   ├── dubbo.json
+│   ├── H2.json
+│   ├── hadoop.json
+│   ├── systemds.json
+│   └── ossbuilds.json
+└── y_labels/
+    ├── y_rdf.csv
+    ├── y_dubbo.csv
+    ├── y_H2.csv
+    ├── y_hadoop.csv
+    ├── y_systemds.csv
+    └── y_ossbuilds.csv
+```
 
-1. **Graph Data (JSON files)**: Contains the graph structure and node types for each dataset. Each JSON file represents one dataset with its corresponding node features and edges.
-2. **Labels (CSV files)**: These files contain the labels associated with each graph for supervised learning tasks.
-3. **PyG Objects**: Pre-processed PyTorch Geometric objects, ready for use in graph neural network models.
+## Installation
 
-All these files are available in the Zenodo link provided above.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-## How to Use
+Note: `torch-geometric` must be installed with versions compatible with your PyTorch build. If needed, follow the official PyG install guide for your platform.
 
-To download and use the dataset, follow these steps:
+## What is in this repository
 
-1. Visit the Zenodo dataset link: [https://zenodo.org/records/13741001](https://zenodo.org/records/13741001).
-2. Download the entire dataset package or specific files you need.
-3. Use the provided JSON files, CSV labels, and PyG objects in your graph-based machine learning models or data analysis.
+- `Type1.py`: `Type1` dataset class for homogeneous graph processing.
+- `Type2.py`: `Type2` dataset class for heterogeneous graph processing.
+- `h_models.py`: homogeneous GNN models.
+- `hg_models.py`: heterogeneous GNN models.
+- `Tutorial.ipynb`: main tutorial.
+- `type_2_experiments.py`: script to run all Type2 experiments and generate result tables.
 
-### Code and Usage
+## Quick usage examples
 
-You can use the code provided in this repository to load and analyze the dataset. For example, the following script shows how to load a dataset:
+### Load a Type2 dataset
 
 ```python
-from Type3 import Type3
+from Type2 import Type2
 
-# Load the dataset
-dataset = Type3("path_to_root_folder","path_to_data_folder", "path_to_labels_folder", "your_dataset")
+# Example dataset: rdf
+# root is used by PyG for processed files
+# x_folder and y_folder point to data downloaded from Zenodo
+
+dataset = Type2(root="tmp", x_folder="data", y_folder="y_labels", file_name="rdf")
+train_split = dataset.load_split("train")
+val_split = dataset.load_split("val")
+test_split = dataset.load_split("test")
+```
+
+### Load a Type1 dataset
+
+```python
+from Type1 import Type1
+
+dataset = Type1(root="tmp", x_folder="data", y_folder="y_labels", file_name="rdf")
+```
+
+## Run Type2 example experiments
+
+Use:
+
+```bash
+python3 type_2_experiments.py
+```
+
+The script:
+- runs all configured Type2 datasets,
+- runs a subset of Type2 models (currently `HeteroGraphConv` and `HeteroTransformer`),
+- uses multiple seeds,
+- supports resume via `all_results_type2.pt`,
+- writes final tables to CSV files (for example `Table3_TEST_MAE.csv`).
+
+This script is provided to show the testing workflow we used; it is not an exhaustive runner for every model presented in the paper.
+
+## Citation
+
+If you use this repository or dataset, please cite:
+- Zenodo dataset record: https://zenodo.org/records/13741001
+
+You can export BibTeX directly from the Zenodo page via the "Cite" button.

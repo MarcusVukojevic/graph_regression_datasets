@@ -38,7 +38,7 @@ class Type2(InMemoryDataset):
         for split in self.split:
             file_path = os.path.join(self.processed_dir, f"type2_{self.file_name}_{split}_data.pt")
             if os.path.exists(file_path):
-                split_dataset = torch.load(file_path)  # Load the processed dataset for this split
+                split_dataset = torch.load(file_path, weights_only=False)  # Load the processed dataset for this split
                 self.split_data[split] = split_dataset  # Store the split dataset
                 self.data_list.extend(split_dataset)  # Add to the complete dataset list
             else:
