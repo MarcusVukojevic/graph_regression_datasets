@@ -4,3 +4,5 @@ torch
 torch-geometric
 scikit-learn
 networkx
+javalang
+anytree
