@@ -1,15 +1,53 @@
-# A Benchmark Dataset for Graph Regression with Homogeneous and Multi‑Relational Variants
+# A Benchmark Dataset for Graph Regression
 
-Code and dataset loaders for graph regression experiments on software-system graphs.
+The repository is now organized around 3 workflows:
+1. Learn and run examples: `src/Tutorial - Start Here!/`
+2. Replicate paper results: `src/replicate paper results/`
+3. Build a custom dataset: `src/build your own regression dataset/`
 
-**Important:** start from `Tutorial.ipynb`. The notebook is the main step-by-step guide for data loading, training, and evaluation.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18598713.svg)](https://doi.org/10.5281/zenodo.18598713)
+
+## Repository map
+
+```text
+graph_regression_datasets/
+├── src/
+│   ├── Tutorial - Start Here!/
+│   │   ├── Tutorial.ipynb
+│   │   ├── Type1.py
+│   │   ├── Type2.py
+│   │   ├── h_models.py
+│   │   ├── hg_models.py
+│   │   └── early_stopping.py
+│   ├── replicate paper results/
+│   │   ├── type_2_experiments.py
+│   │   └── dataset_statistics/
+│   └── build your own regression dataset/
+│       ├── FA-AST_java.py
+│       └── edge_index.py
+├── requirements.txt
+└── Readme.md
+```
+
+## Installation
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Notes:
+- `torch-geometric` must match your installed PyTorch version.
+- If you use dataset-building scripts, install extra dependencies:
+  - `pip install javalang anytree`
 
 ## Dataset download
 
 Dataset files are hosted on Zenodo:
-- https://zenodo.org/records/13741001
+- https://zenodo.org/records/18598713
 
-Expected folders used by the scripts:
+Expected dataset folders:
 
 ```text
 graph_regression_datasets/
@@ -29,35 +67,26 @@ graph_regression_datasets/
     └── y_ossbuilds.csv
 ```
 
-## Installation
+## Workflow 1: Start here (tutorial)
+
+Main entry point:
+- `src/Tutorial - Start Here!/Tutorial.ipynb`
+
+Launch from repo root:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+PYTHONPATH="src/Tutorial - Start Here!" jupyter lab "src/Tutorial - Start Here!/Tutorial.ipynb"
 ```
 
-Note: `torch-geometric` must be installed with versions compatible with your PyTorch build. If needed, follow the official PyG install guide for your platform.
+If your dataset folders are in repo root (`data/`, `y_labels/`), use these paths in loaders:
+- `x_folder="data"`
+- `y_folder="y_labels"`
 
-## What is in this repository
 
-- `Type1.py`: `Type1` dataset class for homogeneous graph processing.
-- `Type2.py`: `Type2` dataset class for heterogeneous graph processing.
-- `h_models.py`: homogeneous GNN models.
-- `hg_models.py`: heterogeneous GNN models.
-- `Tutorial.ipynb`: main tutorial.
-- `type_2_experiments.py`: script to run all Type2 experiments and generate result tables.
-
-## Quick usage examples
-
-### Load a Type2 dataset
+Example:
 
 ```python
 from Type2 import Type2
-
-# Example dataset: rdf
-# root is used by PyG for processed files
-# x_folder and y_folder point to data downloaded from Zenodo
 
 dataset = Type2(root="tmp", x_folder="data", y_folder="y_labels", file_name="rdf")
 train_split = dataset.load_split("train")
@@ -65,34 +94,44 @@ val_split = dataset.load_split("val")
 test_split = dataset.load_split("test")
 ```
 
-### Load a Type1 dataset
+## Workflow 2: Replicate paper results (Type2)
 
-```python
-from Type1 import Type1
+Script:
+- `src/replicate paper results/type_2_experiments.py`
 
-dataset = Type1(root="tmp", x_folder="data", y_folder="y_labels", file_name="rdf")
-```
-
-## Run Type2 example experiments
-
-Use:
+Run from repo root, ensure to have all the libraries that are necessary:
 
 ```bash
-python3 type_2_experiments.py
+PYTHONPATH="src/Tutorial - Start Here!" python3 "src/replicate paper results/type_2_experiments.py"
 ```
 
-The script:
+What it does:
 - runs all configured Type2 datasets,
-- runs a subset of Type2 models (currently `HeteroGraphConv` and `HeteroTransformer`),
-- uses multiple seeds,
-- supports resume via `all_results_type2.pt`,
-- writes final tables to CSV files (for example `Table3_TEST_MAE.csv`).
+- runs two Type2 models (`HeteroGraphConv`, `HeteroTransformer`),
+- evaluates multiple seeds,
+- exports CSV tables (for example `Table3_TEST_MAE.csv`).
 
-This script is provided to show the testing workflow we used; it is not an exhaustive runner for every model presented in the paper.
+Static plots and stats used in the paper are in:
+- `src/replicate paper results/dataset_statistics/`
+
+## Workflow 3: Build your own regression dataset
+
+Scripts:
+- `src/build your own regression dataset/FA-AST_java.py`
+- `src/build your own regression dataset/edge_index.py`
+
+`FA-AST_java.py` is the parser/graph builder for Java sources. Before running it:
+- set your source directory path in the script (`dirname` variable),
+- install `javalang` and `anytree`.
+
+## Common path note
+
+Folder names under `src/` contain spaces. Quote paths in shell commands:
+
+```bash
+python3 "src/replicate paper results/type_2_experiments.py"
+```
 
 ## Citation
 
-If you use this repository or dataset, please cite:
-- Zenodo dataset record: https://zenodo.org/records/13741001
-
-You can export BibTeX directly from the Zenodo page via the "Cite" button.
+Samoaa, P., Vukojevic, M., Haghir Chehreghani, M., & Longa, A. (2026). Broadening the Scope of Graph Regression: Introducing a Dataset with Multiple Representation Settings [Data set]. Zenodo. https://doi.org/10.5281/zenodo.18598713
