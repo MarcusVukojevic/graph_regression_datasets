@@ -1,35 +1,58 @@
-import os
-import random
-import javalang
-import javalang.tree
-import javalang.ast
-import javalang.util
-from javalang.ast import Node
-from anytree import AnyNode, RenderTree
-from anytree import find
-
-
-edges={'Nexttoken':2,'Prevtoken':3,'Nextuse':4,'Prevuse':5,'If':6,'Ifelse':7,'While':8,'For':9,'Nextstmt':10,'Prevstmt':11,'Prevsib':12}
-vocabdict = {'': 0, 'BasicType': 1, 'SuperMethodInvocation': 2, 'ForControl': 3, 'AnnotationMethod': 4, 'InferredFormalParameter': 5, 'LocalVariableDeclaration': 6, 'SuperConstructorInvocation': 7, 'Import': 8, 'ArraySelector': 9, 'BreakStatement': 10, 'FieldDeclaration': 11, 'EnumDeclaration': 12, 'ConstructorDeclaration': 13, 'Annotation': 14, 'ReferenceType': 15, 'EnhancedForControl': 16, 'TypeParameter': 17, 'Statement': 18, 'CompilationUnit': 19, 'EnumConstantDeclaration': 20, 'IfStatement': 21, 'ClassCreator': 22, 'SwitchStatement': 23, 'EnumBody': 24, 'PackageDeclaration': 25, 'Cast': 26, 'VariableDeclaration': 27, 'ArrayCreator': 28, 'This': 29, 'MethodReference': 30, 'InnerClassCreator': 31, 'InterfaceDeclaration': 32, 'FormalParameter': 33, 'CatchClauseParameter': 34, 'SynchronizedStatement': 35, 'VoidClassReference': 36, 'TypeArgument': 37, 'DoStatement': 38, 'Assignment': 39, 'ContinueStatement': 40, 'AssertStatement': 41, 'ExplicitConstructorInvocation': 42, 'AnnotationDeclaration': 43, 'StringLiteralExpr': 44, 'PrimitiveType': 45, 'TryStatement': 46, 'ElementArrayValue': 47, 'BlockStatement': 48, 'ClassReference': 49, 'ReturnStatement': 50, 'IntegerLiteralExpr': 51, 'TernaryExpression': 52, 'VariableDeclarator': 53, 'BinaryOperation': 54, 'ClassDeclaration': 55, 'TryResource': 56, 'MemberReference': 57, 'SuperMemberReference': 58, 'Literal': 59, 'CatchClause': 60, 'WhileStatement': 61, 'ElementValuePair': 62, 'ForStatement': 63, 'StatementExpression': 64, 'ConstantDeclaration': 65, 'ArrayInitializer': 66, 'MethodInvocation': 67, 'Modifier': 68, 'ThrowStatement': 69, 'LambdaExpression': 70, 'SwitchStatementCase': 71, 'MethodDeclaration': 72}
-#from tokendic import vocabdict
+import argparse
 import json
+import os
 import re
-"""
+
+import javalang
+from anytree import AnyNode
+from javalang.ast import Node
+
+
+# Edge type ids used to enrich plain AST edges with flow/sibling/token/use links.
+edges = {
+    'Nexttoken': 2,
+    'Prevtoken': 3,
+    'Nextuse': 4,
+    'Prevuse': 5,
+    'If': 6,
+    'Ifelse': 7,
+    'While': 8,
+    'For': 9,
+    'Nextstmt': 10,
+    'Prevstmt': 11,
+    'Prevsib': 12,
+}
+
+# Fixed vocabulary used by Type1/Type2 processing in this repository.
+vocabdict = {
+    '': 0, 'BasicType': 1, 'SuperMethodInvocation': 2, 'ForControl': 3,
+    'AnnotationMethod': 4, 'InferredFormalParameter': 5, 'LocalVariableDeclaration': 6,
+    'SuperConstructorInvocation': 7, 'Import': 8, 'ArraySelector': 9,
+    'BreakStatement': 10, 'FieldDeclaration': 11, 'EnumDeclaration': 12,
+    'ConstructorDeclaration': 13, 'Annotation': 14, 'ReferenceType': 15,
+    'EnhancedForControl': 16, 'TypeParameter': 17, 'Statement': 18,
+    'CompilationUnit': 19, 'EnumConstantDeclaration': 20, 'IfStatement': 21,
+    'ClassCreator': 22, 'SwitchStatement': 23, 'EnumBody': 24,
+    'PackageDeclaration': 25, 'Cast': 26, 'VariableDeclaration': 27,
+    'ArrayCreator': 28, 'This': 29, 'MethodReference': 30, 'InnerClassCreator': 31,
+    'InterfaceDeclaration': 32, 'FormalParameter': 33, 'CatchClauseParameter': 34,
+    'SynchronizedStatement': 35, 'VoidClassReference': 36, 'TypeArgument': 37,
+    'DoStatement': 38, 'Assignment': 39, 'ContinueStatement': 40,
+    'AssertStatement': 41, 'ExplicitConstructorInvocation': 42,
+    'AnnotationDeclaration': 43, 'StringLiteralExpr': 44, 'PrimitiveType': 45,
+    'TryStatement': 46, 'ElementArrayValue': 47, 'BlockStatement': 48,
+    'ClassReference': 49, 'ReturnStatement': 50, 'IntegerLiteralExpr': 51,
+    'TernaryExpression': 52, 'VariableDeclarator': 53, 'BinaryOperation': 54,
+    'ClassDeclaration': 55, 'TryResource': 56, 'MemberReference': 57,
+    'SuperMemberReference': 58, 'Literal': 59, 'CatchClause': 60,
+    'WhileStatement': 61, 'ElementValuePair': 62, 'ForStatement': 63,
+    'StatementExpression': 64, 'ConstantDeclaration': 65, 'ArrayInitializer': 66,
+    'MethodInvocation': 67, 'Modifier': 68, 'ThrowStatement': 69,
+    'LambdaExpression': 70, 'SwitchStatementCase': 71, 'MethodDeclaration': 72
+}
+
 def get_token(node):
-    token = ''
-    #print(isinstance(node, Node))
-    #print(type(node))
-    if isinstance(node, str):
-        token = node
-    elif isinstance(node, set):
-        token = 'Modifier'
-    elif isinstance(node, Node):
-        token = node.__class__.__name__
-    #print(node.__class__.__name__,str(node))
-    #print(node.__class__.__name__, node)
-    return token
-"""
-def get_token(node):
+    """Map a javalang node (or literal) to the token name used by vocabdict."""
     token = ''
     primitivetype = [ 'int', 'byte', 'short', 'long', 'float', 'double', 'boolean', 'char']
     #print(isinstance(node, Node))
@@ -49,6 +72,7 @@ def get_token(node):
     #print(node.__class__.__name__, node)
     return token
 def get_child(root):
+    """Return flattened children for a javalang AST node."""
     #print(root)
     if isinstance(root, Node):
         children = root.children
@@ -263,11 +287,7 @@ def getedge_nextuse(node,vocabdict,src,tgt,edgetype,variabledict):
                 edgetype.append([edges['Prevuse']])
 
 def remove_comments(java_code):
-    
-
-    # Regular expression to remove comments
-    #comment_regex = r"/\*[\s\S]*?\*/"
-    #comment_regex = r'/\*{79}\n\s\*(?:.*\n)*?\s\*{79}/|/\*\n\s\*(?!\*)[^\n]*?\*/'
+    """Remove block comments to help parsing noisy source files."""
     comment_regex = r"/\*.*?\*/|/\*[a-zA-Z0-9]*?\*/"
 
 
@@ -280,158 +300,180 @@ def remove_comments(java_code):
 
     return java_code_without_comments
 
-def createast():
-    asts=[]
-    paths=[]
-    alltokens=[]
-    dirname = '/Users/samoaa/Downloads/Chalmers_PhD_files/Projects/Erorr_Analysis/Datasets/test_files/OSSBuilds/H2'
-    count = 0
-    sample = []
-    for rt, dirs, files in os.walk(dirname):
-        for file in files:
-            try:
-                programfile=open(os.path.join(rt,file),encoding='utf-8')
-                programtext=programfile.read()
-                #programtext=programtext.replace('\r','')
-                #programtext=remove_comments(programtext)
-                programtokens=javalang.tokenizer.tokenize(programtext)
-                #print(list(programtokens))
-                programast=javalang.parser.parse(programtokens)
-                paths.append(os.path.join(rt,file))
-                asts.append(programast)
-                get_sequence(programast,alltokens)
-                for token in alltokens:
-                    if (token=='WhileStatement') and (file not in sample):
-                        sample.append(file)
-                programfile.close()
-            except:
-                print ("the file is not valid")
-                print (file)
-            #print(os.path.join(rt,file))
-            
-            #print(programast)
-            #print(alltokens)
-    astdict=dict(zip(paths,asts))
-    ifcount=0
-    whilecount=0
-    forcount=0
-    blockcount=0
-    docount=0
-    switchcount=0
-    for token in alltokens:
-        if token=='IfStatement':
-            ifcount+=1
-        if token=='WhileStatement':
-            whilecount+=1
-        if token=='ForStatement':
-            forcount+=1
-        if token=='BlockStatement':
-            blockcount+=1
-        if token=='DoStatement':
-            docount+=1
-        if token=='SwitchStatement':
-            switchcount+=1
-    print('IfStatement:',ifcount,'WhileStatement: ',whilecount,'ForStatement: ',forcount,'BlockStatement',blockcount,'DoStatement: ',docount,'SwitchStatement',switchcount)
-    print('allnodes ',len(alltokens))
-    alltokens=list(set(alltokens))      
-    vocabsize = len(alltokens)
-    #tokenids = range(vocabsize)
-    #vocabdict = dict(zip(alltokens, tokenids))
-    """for token in alltokens:
-        if token not in vocabdict.keys():
-            vocabdict[token] = len(vocabdict) + 1
-    with open('tokendic.py', 'w') as fp:
-        json.dump(vocabdict, fp)"""
-    #tokenids = range(vocabsize)
-    #vocabdict = dict(zip(alltokens, tokenids))
-    print(vocabsize)
-    return astdict,vocabsize,vocabdict
+def createast(dirname, strip_comments=False, only_java_files=True):
+    """Parse a directory of Java files into a {path: javalang AST} dictionary."""
+    if not os.path.isdir(dirname):
+        raise FileNotFoundError(f"Input directory not found: {dirname}")
 
-def createseparategraph(astdict,vocablen,vocabdict,device,mode='astandedges',nextsib=True,ifedge=True,whileedge=True,foredge=True,blockedge=True,nexttoken=True,nextuse=True):
-    pathlist=[]
-    treelist=[]
-    print('nextsib ',nextsib)
-    print('ifedge ',ifedge)
-    print('whileedge ',whileedge)
-    print('foredge ',foredge)
-    print('blockedge ',blockedge)
+    asts = []
+    paths = []
+    all_tokens = []
+    invalid_files = 0
+
+    for rt, _dirs, files in os.walk(dirname):
+        for file in files:
+            if only_java_files and not file.endswith(".java"):
+                continue
+
+            file_path = os.path.join(rt, file)
+            try:
+                with open(file_path, encoding='utf-8') as programfile:
+                    programtext = programfile.read()
+
+                if strip_comments:
+                    programtext = remove_comments(programtext)
+
+                programtokens = javalang.tokenizer.tokenize(programtext)
+                programast = javalang.parser.parse(programtokens)
+                paths.append(file_path)
+                asts.append(programast)
+                get_sequence(programast, all_tokens)
+            except Exception as exc:
+                invalid_files += 1
+                print(f"the file is not valid: {file_path} ({exc})")
+
+    astdict = dict(zip(paths, asts))
+    ifcount = sum(1 for token in all_tokens if token == 'IfStatement')
+    whilecount = sum(1 for token in all_tokens if token == 'WhileStatement')
+    forcount = sum(1 for token in all_tokens if token == 'ForStatement')
+    blockcount = sum(1 for token in all_tokens if token == 'BlockStatement')
+    docount = sum(1 for token in all_tokens if token == 'DoStatement')
+    switchcount = sum(1 for token in all_tokens if token == 'SwitchStatement')
+
+    print(
+        'IfStatement:', ifcount,
+        'WhileStatement:', whilecount,
+        'ForStatement:', forcount,
+        'BlockStatement', blockcount,
+        'DoStatement:', docount,
+        'SwitchStatement', switchcount
+    )
+    print('allnodes', len(all_tokens))
+    print('valid_files', len(astdict), 'invalid_files', invalid_files)
+
+    # This project uses a fixed token dictionary; vocabsize here is dataset coverage only.
+    vocabsize = len(set(all_tokens))
+    print('observed_vocab_size', vocabsize)
+    return astdict, vocabsize, vocabdict
+
+def createseparategraph(
+    astdict,
+    vocablen,
+    vocabdict,
+    device,
+    mode='astandedges',
+    nextsib=True,
+    ifedge=True,
+    whileedge=True,
+    foredge=True,
+    blockedge=True,
+    nexttoken=True,
+    nextuse=True,
+):
+    """Convert parsed AST objects to graph payloads expected by downstream code."""
+    del vocablen  # preserved for backward compatibility with existing calls
+    del device
+
+    print('nextsib', nextsib)
+    print('ifedge', ifedge)
+    print('whileedge', whileedge)
+    print('foredge', foredge)
+    print('blockedge', blockedge)
     print('nexttoken', nexttoken)
-    print('nextuse ',nextuse)
-    print(len(astdict))
-    i=0
-    for path,tree in astdict.items():
-        i = i+1
-        #print(tree)
-        #print(path)
+    print('nextuse', nextuse)
+    print('parsed_files', len(astdict))
+
+    graph_dict = {}
+    for path, tree in astdict.items():
         nodelist = []
-        newtree=AnyNode(id=0,token=None,data=None)
-      #  print (i,'--11')
+        newtree = AnyNode(id=0, token=None, data=None)
         createtree(newtree, tree, nodelist)
-       # print (i,'--22')
-        #print(path)
-        #print(newtree)
+
         x = []
         edgesrc = []
         edgetgt = []
-        edge_attr=[]
-        if mode=='astonly':
-           # print (i,'--333')
+        edge_attr = []
+
+        if mode == 'astonly':
             getnodeandedge_astonly(newtree, x, vocabdict, edgesrc, edgetgt)
-            #print (i,'--444')
         else:
-           # print (i,'--555')
-            getnodeandedge(newtree, x, vocabdict, edgesrc, edgetgt,edge_attr)
-           # print (i,'--666')
-            if nextsib==True:
-                #print (i,'--777')
-                getedge_nextsib(newtree,vocabdict,edgesrc,edgetgt,edge_attr)
-                #print (i,'--888')
-            getedge_flow(newtree,vocabdict,edgesrc,edgetgt,edge_attr,ifedge,whileedge,foredge)
-            #print (i,'--999')
-            if blockedge==True:
-                #print (i,'--1010')
-                getedge_nextstmt(newtree,vocabdict,edgesrc,edgetgt,edge_attr)
-            tokenlist=[]
-            if nexttoken==True:
-                #print (i,'--1111')
-                getedge_nexttoken(newtree,vocabdict,edgesrc,edgetgt,edge_attr,tokenlist)
-                #print (i,'--1212')
-            variabledict={}
-            #print (i,'--1313')
-            if nextuse==True:
-                #print (i,'--1414')
-                getedge_nextuse(newtree,vocabdict,edgesrc,edgetgt,edge_attr,variabledict)
-                #print (i,'--1515')
-        #x = torch.tensor(x, dtype=torch.long, device=device)
-        #print (i,'--1616')
-        edge_index=[edgesrc, edgetgt]
-        #edge_index = torch.tensor([edgesrc, edgetgt], dtype=torch.long, device=device)
-        astlength=len(x)
-        #print(x)
-        #print(edge_index)
-        #print(edge_attr)
-        pathlist.append(path)
-        treelist.append([[x,edge_index,edge_attr],astlength])
-        astdict[path]=[[x,edge_index,edge_attr],astlength]
-    #treedict=dict(zip(pathlist,treelist))
-    return astdict
+            getnodeandedge(newtree, x, vocabdict, edgesrc, edgetgt, edge_attr)
+            if nextsib:
+                getedge_nextsib(newtree, vocabdict, edgesrc, edgetgt, edge_attr)
+            getedge_flow(newtree, vocabdict, edgesrc, edgetgt, edge_attr, ifedge, whileedge, foredge)
+            if blockedge:
+                getedge_nextstmt(newtree, vocabdict, edgesrc, edgetgt, edge_attr)
+            if nexttoken:
+                tokenlist = []
+                getedge_nexttoken(newtree, vocabdict, edgesrc, edgetgt, edge_attr, tokenlist)
+            if nextuse:
+                variabledict = {}
+                getedge_nextuse(newtree, vocabdict, edgesrc, edgetgt, edge_attr, variabledict)
+
+        edge_index = [edgesrc, edgetgt]
+        astlength = len(x)
+        graph_dict[path] = [[x, edge_index, edge_attr], astlength]
+
+    return graph_dict
+
+
+def _summarize_graphs(graph_dict):
+    """Print a compact summary useful for smoke tests."""
+    total_nodes = 0
+    total_edges = 0
+    for payload, ast_len in graph_dict.values():
+        edge_index = payload[1]
+        total_nodes += ast_len
+        total_edges += len(edge_index[0])
+
+    print('graphs_built', len(graph_dict))
+    print('total_nodes', total_nodes)
+    print('total_edges', total_edges)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Build FA-AST graph representations from Java files.')
+    parser.add_argument('--input-dir', required=True, help='Directory containing Java files to parse.')
+    parser.add_argument('--output-json', default=None, help='Optional path where the generated graph dict is saved as JSON.')
+    parser.add_argument('--mode', choices=['astandedges', 'astonly'], default='astandedges', help='Graph extraction mode.')
+    parser.add_argument('--strip-comments', action='store_true', help='Strip block comments before tokenization.')
+    parser.add_argument('--include-non-java', action='store_true', help='Also attempt to parse files without .java extension.')
+    parser.add_argument('--disable-nextsib', action='store_true', help='Disable next-sibling edges.')
+    parser.add_argument('--disable-ifedge', action='store_true', help='Disable if/ifelse edges.')
+    parser.add_argument('--disable-whileedge', action='store_true', help='Disable while-loop edges.')
+    parser.add_argument('--disable-foredge', action='store_true', help='Disable for-loop edges.')
+    parser.add_argument('--disable-blockedge', action='store_true', help='Disable next-statement edges.')
+    parser.add_argument('--disable-nexttoken', action='store_true', help='Disable next-token edges.')
+    parser.add_argument('--disable-nextuse', action='store_true', help='Disable next-use edges.')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    astdict, vocabsize, vocabdict=createast()
-    AST = astdict.copy()
-    fa_AST=createseparategraph(astdict, vocabsize, vocabdict,device='cpu',mode='else',nextsib=True,ifedge=True,whileedge=True,foredge=True,blockedge=True,nexttoken=True,nextuse=True)
-'''
+    args = parse_args()
+    astdict, vocabsize, vocab = createast(
+        dirname=args.input_dir,
+        strip_comments=args.strip_comments,
+        only_java_files=not args.include_non_java,
+    )
 
-    tree =  {re.search(r"/([^/]+)$", key).group(1): value for key, value in AST.items()}
-    import pandas as pd 
-    df = pd.read_csv('/Users/samoaa/Downloads/Chalmers_PhD_files/Projects/Erorr_Analysis/Datasets/runtimes_data/OSSBuilds/run-time data/rdf4j/rdf4j_agg.csv', delimiter=';')
-    df['Test case'] = df['Test case']+'.java'
-    df = df[['Test case', 'Runtime in ms']]
-    dictionary = df.set_index('Test case')['Runtime in ms'].to_dict()
-    new_dict = {key: (tree[key], dictionary[key]) for key in tree if key in dictionary}
-    test = {tree[key]: dictionary[key] for key in tree if key in dictionary}
-'''
-    
-  
+    fa_ast = createseparategraph(
+        astdict,
+        vocabsize,
+        vocab,
+        device='cpu',
+        mode=args.mode,
+        nextsib=not args.disable_nextsib,
+        ifedge=not args.disable_ifedge,
+        whileedge=not args.disable_whileedge,
+        foredge=not args.disable_foredge,
+        blockedge=not args.disable_blockedge,
+        nexttoken=not args.disable_nexttoken,
+        nextuse=not args.disable_nextuse,
+    )
 
+    _summarize_graphs(fa_ast)
 
-
+    if args.output_json:
+        with open(args.output_json, 'w', encoding='utf-8') as fp:
+            json.dump(fa_ast, fp)
+        print('saved_json', args.output_json)

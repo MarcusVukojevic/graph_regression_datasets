@@ -24,7 +24,9 @@ graph_regression_datasets/
 │   │   └── dataset_statistics/
 │   └── build your own regression dataset/
 │       ├── FA-AST_java.py
-│       └── edge_index.py
+│       └── mini_java/
+│           ├── MiniTest.java
+│           └── fa_ast_output.json
 ├── requirements.txt
 └── Readme.md
 ```
@@ -116,13 +118,54 @@ Static plots and stats used in the paper are in:
 
 ## Workflow 3: Build your own regression dataset
 
-Scripts:
+Script:
 - `src/build your own regression dataset/FA-AST_java.py`
-- `src/build your own regression dataset/edge_index.py`
 
-`FA-AST_java.py` is the parser/graph builder for Java sources. Before running it:
-- set your source directory path in the script (`dirname` variable),
-- install `javalang` and `anytree`.
+`FA-AST_java.py` parses Java files and builds FA-AST graph payloads.
+
+Run on your own Java folder:
+
+```bash
+python3.11 "src/build your own regression dataset/FA-AST_java.py" \
+  --input-dir "/path/to/java/files" \
+  --output-json "fa_ast_output.json"
+```
+
+Included mini example (already in repo):
+- Input file: `src/build your own regression dataset/mini_java/MiniTest.java`
+- Generated graph: `src/build your own regression dataset/mini_java/fa_ast_output.json`
+
+Regenerate the included sample graph:
+
+```bash
+python3.11 "src/build your own regression dataset/FA-AST_java.py" \
+  --input-dir "src/build your own regression dataset/mini_java" \
+  --output-json "src/build your own regression dataset/mini_java/fa_ast_output.json"
+```
+
+Quick verification test:
+
+```bash
+python3.11 - <<'PY'
+import json
+
+path = "src/build your own regression dataset/mini_java/fa_ast_output.json"
+with open(path, "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+print("graphs:", len(data))
+assert len(data) > 0, "No graphs generated"
+
+sample_key, sample_value = next(iter(data.items()))
+payload, ast_len = sample_value
+x, edge_index, edge_attr = payload
+print("sample:", sample_key)
+print("ast_len:", ast_len, "nodes:", len(x), "edges:", len(edge_index[0]), "edge_attr:", len(edge_attr))
+assert len(x) == ast_len, "Node count mismatch"
+assert len(edge_index[0]) == len(edge_attr), "Edge/attribute mismatch"
+print("FA-AST smoke test: OK")
+PY
+```
 
 ## Common path note
 

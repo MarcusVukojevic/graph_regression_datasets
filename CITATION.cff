@@ -1,0 +1,6 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite us!"
+title: "A Benchmark Dataset for Graph Regression with Homogeneous and Multi-Relational Variants"
+doi: 10.5281/zenodo.18598713
+url: "https://zenodo.org/records/18598713"
+type: software
