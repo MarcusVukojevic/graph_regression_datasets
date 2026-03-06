@@ -8,7 +8,7 @@ import random
 import torch.nn.functional as F
 from torch import nn
 from torch_geometric.nn import HeteroConv, GraphConv, TransformerConv, Linear
-from Type2 import Type2
+from relsc_m import RelSCM
 from typing import List
 
 DEVICE = "cpu"         # set to "cuda" if available
@@ -24,26 +24,26 @@ SEEDS = (0, 1, 2, 3, 4)
 # metrics used everywhere
 METRICS = ["MAE", "RMSE", "MAPE", "RHO", "MRE"]
 # file where incremental results are saved
-RESULTS_PATH = "all_results_type2.pt"
+RESULTS_PATH = "all_results_relsc_m.pt"
 
 
 # ====================== DATASETS ======================
 
-type2_dataset3 = Type2(".", "data", "y_labels", "H2")
-type2_dataset1 = Type2(".", "data", "y_labels", "rdf")
-type2_dataset2 = Type2(".", "data", "y_labels", "dubbo")
-type2_dataset4 = Type2(".", "data", "y_labels", "hadoop")
-type2_dataset5 = Type2(".", "data", "y_labels", "systemds")
-type2_dataset6 = Type2(".", "data", "y_labels", "ossbuilds")
+relsc_m_dataset3 = RelSCM(project_name="H2")
+relsc_m_dataset1 = RelSCM(project_name="rdf")
+relsc_m_dataset2 = RelSCM(project_name="dubbo")
+relsc_m_dataset4 = RelSCM(project_name="hadoop")
+relsc_m_dataset5 = RelSCM(project_name="systemds")
+relsc_m_dataset6 = RelSCM(project_name="ossbuilds")
 
 # ------- DATASETS (column order as in the tables) -------
 datasets = {
-    "Hadoop":    type2_dataset4,
-    "RDF4J":     type2_dataset1,
-    "SystemDS":  type2_dataset5,
-    "H2":        type2_dataset3,
-    "Dubbo":     type2_dataset2,
-    "OssBuilds": type2_dataset6,
+    "Hadoop":    relsc_m_dataset4,
+    "RDF4J":     relsc_m_dataset1,
+    "SystemDS":  relsc_m_dataset5,
+    "H2":        relsc_m_dataset3,
+    "Dubbo":     relsc_m_dataset2,
+    "OssBuilds": relsc_m_dataset6,
 }
 
 
@@ -433,7 +433,7 @@ def _init_result_entry(all_results, model_name, ds_name):
 
 # ====================== RUN WITH CHECKPOINT ======================
 
-print("Starting Type2 experiments...")
+print("Starting RelSCM experiments...")
 
 # 1) Load partial results if present
 if os.path.exists(RESULTS_PATH):
@@ -489,7 +489,7 @@ for model_name, ctor in model_registry.items():
 tables = _build_tables(all_results)
 
 # ------- MAIN OUTPUT (Table 3) -------
-print("=== Table 3 (TEST MAE) — RelSC-M / Type2 — New models only ===")
+print("=== Table 3 (TEST MAE) — RelSC-M / RelSCM — New models only ===")
 print(tables["Table3_TEST_MAE"])
 
 # ------- SAVE RESULTS TO CSV -------

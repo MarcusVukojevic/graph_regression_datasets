@@ -14,13 +14,14 @@ graph_regression_datasets/
 ├── src/
 │   ├── Tutorial - Start Here!/
 │   │   ├── Tutorial.ipynb
-│   │   ├── Type1.py
-│   │   ├── Type2.py
+│   │   ├── relsc_h.py
+│   │   ├── relsc_m.py
 │   │   ├── h_models.py
 │   │   ├── hg_models.py
 │   │   └── early_stopping.py
 │   ├── replicate paper results/
-│   │   ├── type_2_experiments.py
+│   │   ├── relsc_m_experiments.py
+│   │   ├── relsc_m.py
 │   │   └── dataset_statistics/
 │   └── build your own regression dataset/
 │       ├── FA-AST_java.py
@@ -88,28 +89,30 @@ If your dataset folders are in repo root (`data/`, `y_labels/`), use these paths
 Example:
 
 ```python
-from Type2 import Type2
+from relsc_m import RelSCM
 
-dataset = Type2(root="tmp", x_folder="data", y_folder="y_labels", file_name="rdf")
-train_split = dataset.load_split("train")
-val_split = dataset.load_split("val")
-test_split = dataset.load_split("test")
+dataset = RelSCM(root="./data", project_name="rdf") # or dataset = RelSC(project_name="rdf")
+
+split_idx = relsc_m_dataset1.get_idx_split()
+train_loader = DataLoader(relsc_m_dataset1[split_idx['train']], batch_size=batch_size, shuffle=True)
+val_loader   = DataLoader(relsc_m_dataset1[split_idx['val']],   batch_size=batch_size, shuffle=False)
+test_loader  = DataLoader(relsc_m_dataset1[split_idx['test']],  batch_size=batch_size, shuffle=False)
 ```
 
 ## Workflow 2: Replicate paper results (Type2)
 
 Script:
-- `src/replicate paper results/type_2_experiments.py`
+- `src/replicate paper results/relsc_m_experiments.py`
 
 Run from repo root, ensure to have all the libraries that are necessary:
 
 ```bash
-PYTHONPATH="src/Tutorial - Start Here!" python3 "src/replicate paper results/type_2_experiments.py"
+PYTHONPATH="src/Tutorial - Start Here!" python3 "src/replicate paper results/relsc_m_experiments.py"
 ```
 
 What it does:
-- runs all configured Type2 datasets,
-- runs two Type2 models (`HeteroGraphConv`, `HeteroTransformer`),
+- runs all configured RelSCM datasets,
+- runs two RelSCM models (`HeteroGraphConv`, `HeteroTransformer`),
 - evaluates multiple seeds,
 - exports CSV tables (for example `Table3_TEST_MAE.csv`).
 
@@ -172,7 +175,7 @@ PY
 Folder names under `src/` contain spaces. Quote paths in shell commands:
 
 ```bash
-python3 "src/replicate paper results/type_2_experiments.py"
+python3 "src/replicate paper results/relsc_m_experiments.py"
 ```
 
 ## Citation
