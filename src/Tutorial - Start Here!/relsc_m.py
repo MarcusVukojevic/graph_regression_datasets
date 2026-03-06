@@ -51,8 +51,71 @@ def _download_with_tqdm(url, filepath):
 
 
 class RelSCM(InMemoryDataset):
-    r"""The multi-relational variant (RelSC-M) of the RelSC benchmark dataset."""
+    r"""The multi-relational variant (RelSC-M) of the RelSC benchmark dataset from
+    the `"A Benchmark Dataset for Graph Regression with Homogeneous and
+    Multi-Relational Variants" <https://arxiv.org/pdf/2505.23875>`_ paper.
     
+    This dataset represents Java source code as multi-relational graphs,
+    categorizing AST nodes into 7 distinct semantic groups (e.g., Declarations,
+    Control Flow, Data Types) and connecting them via heterogeneous edge types.
+    The task is a graph-level regression predicting the normalized execution time
+    of the corresponding Java program.
+
+    .. note::
+        The target values are normalized continuously in the range :obj:`[0, 1]`.
+
+    **STATS:**
+
+    .. list-table::
+        :widths: 20 10 10 10
+        :header-rows: 1
+
+        * - Name
+          - #graphs
+          - Avg. Nodes
+          - Avg. Edges
+        * - hadoop
+          - 2,895
+          - ~1,490
+          - ~11,764
+        * - H2
+          - 194
+          - ~2,091
+          - ~16,518
+        * - dubbo
+          - 123
+          - ~616
+          - ~4,812
+        * - rdf
+          - 478
+          - ~450
+          - ~3,574
+        * - systemds
+          - 127
+          - ~871
+          - ~6,805
+        * - ossbuilds
+          - 922
+          - ~875
+          - ~6,907
+
+    Args:
+        root (str): Root directory where the dataset should be saved.
+        project_name (str, optional): The name of the software project to load.
+            Available options are :obj:`"rdf"`, :obj:`"dubbo"`, :obj:`"H2"`,
+            :obj:`"hadoop"`, :obj:`"systemds"`, and :obj:`"ossbuilds"`.
+            (default: :obj:`"rdf"`)
+        transform (callable, optional): A function/transform that takes in an
+            :obj:`torch_geometric.data.HeteroData` object and returns a
+            transformed version. The data object will be transformed before
+            every access. (default: :obj:`None`)
+        pre_transform (callable, optional): A function/transform that takes in
+            an :obj:`torch_geometric.data.HeteroData` object and returns a
+            transformed version. The data object will be transformed before
+            being saved to disk. (default: :obj:`None`)
+        force_reload (bool, optional): Whether to re-process the dataset.
+            (default: :obj:`False`)
+    """
     urls = ZENODO_URLS
 
     def __init__(self, root: str = './data', project_name: str = 'rdf', transform=None, pre_transform=None, force_reload: bool = False):
